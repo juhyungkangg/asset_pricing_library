@@ -1,6 +1,8 @@
 # src/utils/monte_carlo_functions.py
 import numpy as np
-
+from tqdm import tqdm
+from scipy.integrate import trapezoid
+from scipy.stats import norm
 
 def simulate_paths_gbm(n_paths: int, n_steps: int, T: float, r: float, q: float, sigma: float, S0: float) -> np.ndarray:
     """
@@ -81,10 +83,65 @@ def barrier_option_price_mc(paths: np.ndarray, strike: float, maturity: float, i
     return float(np.mean(payoff))
 
 
+def variance_swap_swaption_price_mc(var_swap_spot, K, r, T1, T2, params, n_paths, n_steps):
+    nu, theta, k1, k2, rho = params['nu'], params['theta'], params['k1'], params['k2'], params['rho']
 
+    dt = T1 / n_steps
+
+    dW_t_1 = np.random.normal(loc=0, scale=np.sqrt(dt), size=(n_paths, n_steps))
+    dB_t   = np.random.normal(loc=0, scale=np.sqrt(dt), size=(n_paths, n_steps))
+    dW_t_2 = rho * dW_t_1 + np.sqrt(1 - rho**2) * dB_t
+
+    def xi_t_u_func(u):
+        # Instantaneous VS Forward variances
+        xi_t_u = np.zeros((n_paths, n_steps + 1)) # t: 0 ~ T1 and u: T1 ~ T2
+        xi_t_u[:, 0] = var_swap_spot # xi_0_u = 0.2 by the given condition for any u
+
+        alpha_theta = 1 / np.sqrt((1 - theta)**2 + theta**2 + 2 * rho * theta * (1-theta))
+
+        for i in range(1, xi_t_u.shape[1]):
+            xi_t_u[:, i] = xi_t_u[:, i-1] + (2 * nu) * xi_t_u[:, i-1] * alpha_theta *\
+                         ((1 - theta) * np.exp(-k1 * (u - dt * (i-1))) * dW_t_1[:, i-1]\
+                             + theta  * np.exp(-k2 * (u - dt * (i-1))) * dW_t_2[:, i-1])
+
+        return xi_t_u[:, -1]
+
+    # Calculate the integral
+    integral_steps = 1000
+    u_val = np.linspace(T1, T2, integral_steps)
+    xi_val = np.zeros((n_paths, integral_steps))
+
+    for i in tqdm(range(integral_steps)):
+        xi_val[:, i] = xi_t_u_func(u_val[i])
+
+    integral_val = np.zeros(n_paths)
+
+    for i in tqdm(range(n_paths)):
+        integral_val[i] = trapezoid(xi_val[i], x=u_val)
+
+    # Payoff
+    payoff = np.maximum(integral_val / (T2 - T1) - K, 0)
+
+    # Price
+    discount_factor = np.exp(-r * T1)
+    price = np.mean(payoff * discount_factor)
+
+    return price
 
 
 
 
 if __name__ == '__main__':
-    pass
+    # Set variables
+    T1, T2 = 0.5, 1.0
+    r = 0.01  # Flat discount rate
+    var_swap_spot = 0.2
+    strike = var_swap_spot  # ATM
+    params = [
+        {'nu': 1.50, 'theta': 0.312, 'k1': 2.63, 'k2': 0.42, 'rho': -0.7},
+        {'nu': 1.74, 'theta': 0.245, 'k1': 5.35, 'k2': 0.28, 'rho': 0.0},
+        {'nu': 1.86, 'theta': 0.230, 'k1': 7.54, 'k2': 0.24, 'rho': 0.7}
+    ]
+
+    print(variance_swap_swaption_price_mc(var_swap_spot=var_swap_spot, K=var_swap_spot, r=r, T1=T1, T2=T2, params=params[0], n_paths=100000, n_steps=252))
+

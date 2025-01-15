@@ -40,6 +40,6 @@ class BlackScholesEngine(PricingEngine):
         # Possibly adapt the Domestic/Foreign currency logic
         raise NotImplementedError("FX barrier option pricing not yet implemented in Black-ScholesEngine.")
 
-    def price_variance_swaption(self, variance_swaption):
+    def price_variance_swap_swaption(self, variance_swaption):
         # Possibly adapt the Domestic/Foreign currency logic
         raise NotImplementedError("FX barrier option pricing not yet implemented in Black-ScholesEngine.")

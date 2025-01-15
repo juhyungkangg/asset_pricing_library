@@ -53,7 +53,7 @@ class PDEPricingEngine(PricingEngine):
         """
         raise NotImplementedError("FX Barrier pricing not yet implemented.")
 
-    def price_variance_swaption(self, swaption):
+    def price_variance_swap_swaption(self, swaption):
         """
         TODO: Implement a variance swap(tion) PDE if needed.
         """

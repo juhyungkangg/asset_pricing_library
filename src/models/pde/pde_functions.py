@@ -13,8 +13,8 @@ def option_price_pde(
         x_min: float, x_max: float,
         ):
     """
-    Price a European call or put option using a finite difference method
-    for the Black–Scholes PDE on [0, x_max].
+    Price a European call or put option using implicit finite difference method
+    for the Black–Scholes PDE on [x_min, x_max].
     """
     # Create spatial and time steps
     dx = (x_max - x_min) / nx

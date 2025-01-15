@@ -19,5 +19,5 @@ class PricingEngine(ABC):
         pass
 
     @abstractmethod
-    def price_variance_swaption(self, swaption):
+    def price_variance_swap_swaption(self, swaption):
         pass

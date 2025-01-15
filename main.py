@@ -12,7 +12,7 @@ from src.models.monte_carlo.monte_carlo_pricing import MonteCarloEngine
 market = Market(
     yield_curve=None,  # a yield curve object or mock
     vol_surface_dict={},
-    fx_spot_rates={"STOCK_XYZ": 100.0}
+    spot_prices={"STOCK_XYZ": 100.0}
 )
 
 # 2. Construct an Instrument
@@ -136,3 +136,11 @@ valuation_req = ValuationRequest(
 )
 fair_value = valuation_req.run_valuation()
 print("Fair Value:", fair_value)
+
+
+# 1. Create a Market object
+market = Market(
+    yield_curve=None,  # a yield curve object or mock
+    vol_surface_dict={},
+    spot_prices={"STOCK_XYZ": 100.0}
+)

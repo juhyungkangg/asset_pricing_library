@@ -13,7 +13,8 @@ class MonteCarloEngine(PricingEngine):
                  spot_price: float,
                  dividend_yield: float = 0.0,
                  n_paths: int = 10000,
-                 n_steps: int = 252,):
+                 n_steps: int = 252,
+                 params: object = None):
         """
         Monte Carlo pricing engine using a Black-Scholes setup.
 
@@ -34,6 +35,7 @@ class MonteCarloEngine(PricingEngine):
         self.q = dividend_yield
         self.n_paths = n_paths
         self.n_steps = n_steps
+        self.params = params
 
     def _simulate_paths_gbm(self, T):
         return simulate_paths_gbm(self.n_paths, self.n_steps, T, self.r, self.q, self.sigma, self.S0)
@@ -70,8 +72,9 @@ class MonteCarloEngine(PricingEngine):
         """
         raise NotImplementedError("FX Barrier pricing not yet implemented.")
 
-    def price_variance_swaption(self, swaption):
-        """
-        TODO: Implement a variance swap(tion) Monte Carlo if needed.
-        """
-        raise NotImplementedError("Variance swaption pricing not yet implemented.")
+    def price_variance_swap_swaption(self, variance_swap_swaption):
+        K = variance_swap_swaption.K
+        T1 = variance_swap_swaption.T1
+        T2 = variance_swap_swaption.T2
+
+        return variance_swap_swaption_price_mc(self.S0, K, self.r, T1, T2, self.params, self.n_paths, self.n_steps)

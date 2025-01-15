@@ -1,5 +1,5 @@
 # src/models/hull_white.py
-from .pricing_engine_base import PricingEngine
+from src.models.pricing_engine_base import PricingEngine
 
 class HullWhiteEngine(PricingEngine):
     """
@@ -20,7 +20,7 @@ class HullWhiteEngine(PricingEngine):
     def price_fx_barrier_option(self, fx_barrier_option):
         raise NotImplementedError("Hull-WhiteEngine doesn't handle FX barrier options by default.")
 
-    def price_variance_swaption(self, swaption):
+    def price_variance_swap_swaption(self, swaption):
         # Implement the Hull-White 1-factor swaption formula or a tree/MC approach
         # Typically involves calibrating alpha, sigma to swaption vol data,
         # then using an analytical approach for European swaptions under HW.
