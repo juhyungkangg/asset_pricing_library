@@ -3,8 +3,8 @@
 This project provides a flexible framework for pricing a variety of financial derivatives, including:
 - **Vanilla Options** (European-style calls and puts)
 - **Barrier Options** (e.g., up-and-out, down-and-in)
-- **FX Barrier Options** (extension of barrier options for foreign exchange)
 - **Variance Swap Swaptions** (an exotic volatility derivative)
+- *FX Barrier Options (Currently working on)* (extension of barrier options for foreign exchange)
 
 Multiple pricing approaches are demonstrated:
 - **Analytical / Semi-Analytical** (via Black–Scholes formulas)
