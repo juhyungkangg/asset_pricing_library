@@ -38,10 +38,14 @@ class PDEPricingEngine(PricingEngine):
         return vanilla_option_price_pde(self.S0, K, T, self.r, self.sigma, option_type, x_max, self.nx, self.nt)
 
     def price_barrier_option(self, barrier_option):
-        """
-        TODO: Implement a specialized FX barrier PDE if needed.
-        """
-        raise NotImplementedError("FX Barrier pricing not yet implemented.")
+        T = barrier_option.maturity
+        K = barrier_option.strike
+        B = barrier_option.barrier_level
+        barrier_type = barrier_option.barrier_type
+        option_type = barrier_option.option_type
+
+        return barrier_option_price_pde(self.S0, K, T, self.r, self.sigma, B, option_type, barrier_type, self.nx, self.nt)
+
 
     def price_fx_barrier_option(self, fx_barrier_option):
         """

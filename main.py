@@ -53,8 +53,8 @@ pde_engine = PDEPricingEngine(
     volatility=0.20,
     spot_price=market.get_spot_price("STOCK_XYZ"),
     dividend_yield=0.0,
-    nx=500,
-    nt=500
+    nx=2200,
+    nt=252
 )
 
 # 4. Create a Valuation Request
@@ -64,36 +64,36 @@ valuation_req = ValuationRequest(
     market=market
 )
 
-# 5. Run valuation
-fair_value = valuation_req.run_valuation()
-print("Fair Value:", fair_value)
+# # 5. Run valuation
+# fair_value = valuation_req.run_valuation()
+# print("Fair Value:", fair_value)
+#
+# valuation_req = ValuationRequest(
+#     instrument=eu_call_option,
+#     pricer=mc_engine,
+#     market=market
+# )
+# fair_value = valuation_req.run_valuation()
+# print("Fair Value:", fair_value)
 
-valuation_req = ValuationRequest(
-    instrument=eu_call_option,
-    pricer=mc_engine,
-    market=market
-)
-fair_value = valuation_req.run_valuation()
-print("Fair Value:", fair_value)
-
-# 4. Create a Valuation Request
-valuation_req = ValuationRequest(
-    instrument=eu_put_option,
-    pricer=bs_engine,
-    market=market
-)
-
-# 5. Run valuation
-fair_value = valuation_req.run_valuation()
-print("Fair Value:", fair_value)
-
-valuation_req = ValuationRequest(
-    instrument=eu_put_option,
-    pricer=mc_engine,
-    market=market
-)
-fair_value = valuation_req.run_valuation()
-print("Fair Value:", fair_value)
+# # 4. Create a Valuation Request
+# valuation_req = ValuationRequest(
+#     instrument=eu_put_option,
+#     pricer=bs_engine,
+#     market=market
+# )
+#
+# # 5. Run valuation
+# fair_value = valuation_req.run_valuation()
+# print("Fair Value:", fair_value)
+#
+# valuation_req = ValuationRequest(
+#     instrument=eu_put_option,
+#     pricer=mc_engine,
+#     market=market
+# )
+# fair_value = valuation_req.run_valuation()
+# print("Fair Value:", fair_value)
 
 
 # valuation_req = ValuationRequest(
@@ -121,9 +121,17 @@ valuation_req = ValuationRequest(
 fair_value = valuation_req.run_valuation()
 print("Fair Value:", fair_value)
 
+# valuation_req = ValuationRequest(
+#     instrument=barrier_call_option,
+#     pricer=mc_engine,
+#     market=market
+# )
+# fair_value = valuation_req.run_valuation()
+# print("Fair Value:", fair_value)
+
 valuation_req = ValuationRequest(
     instrument=barrier_call_option,
-    pricer=mc_engine,
+    pricer=pde_engine,
     market=market
 )
 fair_value = valuation_req.run_valuation()
