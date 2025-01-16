@@ -58,20 +58,31 @@ def barrier_option_price_bs(S: float, K: float, T: float, r: float, q: float, si
                     return vanilla_call - out_option
                 elif barrier_type.lower().endswith("out"):
                     return out_option
-        elif option_type.lower().startswith("up"):
+        elif barrier_type.lower().startswith("up"):
             if B <= K:
-                raise ValueError("B cannot be lower than K for up-and-in/out barrier call option.")
+                raise ValueError("The price of the up-and-out barrier call option vanishes when B <= K.")
             elif B > K:
+                # line 1
                 vanilla_call = vanilla_option_price_bs(S, K, T, r, q, sigma, option_type)
-                call_1 = vanilla_option_price_bs(S, B, T, r, q, sigma, option_type)
-                call_2 = vanilla_option_price_bs(S_tilde(S, B), K, T, r, q, sigma, option_type)
-                call_3 = vanilla_option_price_bs(S_tilde(S, B), B, T, r, q, sigma, option_type)
-                d2_1 = d2(S, B, T, r, q, sigma)
-                digital_call_1 = np.exp(-r * T) * norm.cdf(d2_1)
-                d2_2 = d2(S_tilde(S, B), B, T, r, q, sigma)
-                digital_call_2 = np.exp(-r * T) * norm.cdf(d2_2)
+                d1_1 = d1(S, B, T, r, q, sigma)
+                line1 = vanilla_call - S * norm.cdf(d1_1)
 
-                out_option = vanilla_call - call_1 - (B - K) * digital_call_1 - (S / B) ** (2 * a) * (call_2 - call_3 - (B - K) * digital_call_2)
+                # line 2
+                d1_2 = d1(B**2, K * S, T, r, q, sigma)
+                d1_3 = d1(B, S, T, r, q, sigma)
+                line2 = -B * (B / S)**(2 * r / sigma**2) * (norm.cdf(d1_2) - norm.cdf(d1_3))
+
+                # line 3
+                d2_1 = d2(S, B, T, r, q, sigma)
+                line3 = np.exp(-r * T) * K * norm.cdf(d2_1)
+
+                # line 4
+                d2_2 = d2(B**2, K * S, T, r, q, sigma)
+                d2_3 = d2(B, S, T, r, q, sigma)
+                line4 = np.exp(-r * T) * K * (S / B)**(1 - 2 * r / sigma**2) * (norm.cdf(d2_2) - norm.cdf(d2_3))
+
+                out_option = line1 + line2 + line3 + line4
+
 
                 if barrier_type.lower().endswith("in"):
                     return vanilla_call - out_option
@@ -80,16 +91,26 @@ def barrier_option_price_bs(S: float, K: float, T: float, r: float, q: float, si
     elif option_type.lower() == "put":
         if barrier_type.lower().startswith("down"):
             if B <= K:
+                # line 1
                 vanilla_put = vanilla_option_price_bs(S, K, T, r, q, sigma, option_type)
-                put_1 = vanilla_option_price_bs(S, B, T, r, q, sigma, option_type)
-                put_2 = vanilla_option_price_bs(S_tilde(S, B), K, T, r, q, sigma, option_type)
-                put_3 = vanilla_option_price_bs(S_tilde(S, B), B, T, r, q, sigma, option_type)
-                d2_1 = d2(S, B, T, r, q, sigma)
-                digital_put_1 = np.exp(-r * T) * norm.cdf(-d2_1)
-                d2_2 = d2(S_tilde(S, B), B, T, r, q, sigma)
-                digital_put_2 = np.exp(-r * T) * norm.cdf(-d2_2)
+                d1_1 = d1(S, B, T, r, q, sigma)
+                line1 = vanilla_put + S * norm.cdf(-d1_1)
 
-                out_option = vanilla_put - put_1 - (K - B) * digital_put_1 - (S / B) ** (2 * a) * (put_2 - put_3 + (K - B) * digital_put_2)
+                # line 2
+                d1_2 = d1(B**2, K * S, T, r, q, sigma)
+                d1_3 = d1(B, S, T, r, q, sigma)
+                line2 = -B * (B / S)**(2 * r / sigma**2) * (norm.cdf(d1_2) - norm.cdf(d1_3))
+
+                # line 3
+                d2_1 = d2(S, B, T, r, q, sigma)
+                line3 = -np.exp(-r * T) * K * norm.cdf(-d2_1)
+
+                # line 4
+                d2_2 = d2(B**2, K * S, T, r, q, sigma)
+                d2_3 = d2(B, S, T, r, q, sigma)
+                line4 = np.exp(-r * T) * K * (S / B)**(1 - 2 * r / sigma**2) * (norm.cdf(d2_2) - norm.cdf(d2_3))
+
+                out_option = line1 + line2 + line3 + line4
 
                 if barrier_type.lower().endswith("in"):
                     return vanilla_put - out_option
@@ -126,4 +147,4 @@ def barrier_option_price_bs(S: float, K: float, T: float, r: float, q: float, si
 
 
 if __name__ == "__main__":
-    pass
+    option_price = barrier_option_price_bs(100, 90, 1, 0.02, 0.0, 0.2, 120, "call", "up-and-out")

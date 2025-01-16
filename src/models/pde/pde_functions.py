@@ -10,7 +10,7 @@ def option_price_pde(
         S0: float, K: float, T: float, r: float,
         sigma: float, option_type: str,
         nx: int, nt: int,
-        x_min: float, x_max: float,
+        x_min: float, x_max: float, barrier: object = None,
         ):
     """
     Price a European call or put option using implicit finite difference method
@@ -29,6 +29,13 @@ def option_price_pde(
         V = np.maximum(x - K, 0)
     elif option_type == 'put':
         V = np.maximum(K - x, 0)
+
+    if barrier is not None:
+        barrier_idx = np.argmin(np.abs(x - barrier))
+        if option_type == 'call':
+            V[barrier_idx:] = 0
+        elif option_type == 'put':
+            V[:barrier_idx] = 0
 
 
     # Initialize tridiagonal matrix for implicit scheme
@@ -57,8 +64,16 @@ def option_price_pde(
         t -= dt
 
         # Solve for the new option values
-        V = np.linalg.inv(M) @ V + C
+        if option_type == 'call':
+            V = np.linalg.inv(M) @ V + C
+        elif option_type == 'put':
+            V = np.linalg.inv(M) @ V
 
+        if barrier is not None:
+            if option_type == 'call':
+                V[barrier_idx:] = 0
+            elif option_type == 'put':
+                V[:barrier_idx] = 0
 
     # Find the grid index closest to S0
     x_idx = np.argmin(np.abs(x - S0))
@@ -83,31 +98,62 @@ def barrier_option_price_pde(
         nx: int = 300, nt: int = 300,
         ):
 
-    # Discretize asset prices
-    if barrier_type.lower().startswith('up'):
-        if barrier_type.lower().endswith(('in', 'out')):
-            # Calculate 'up-and-out' option
-            x_max = B
-            x_min = 0
+    if option_type == 'call':
+        # Discretize asset prices
+        if barrier_type.lower().startswith('up'):
+            if barrier_type.lower().endswith(('in', 'out')):
+                # Calculate 'up-and-out' option
+                x_max = S0 * 3
+                x_min = 0
+
+                out_option_price = option_price_pde(S0, K, T, r, sigma, option_type, nx, nt, x_min, x_max, B)
+            else:
+                raise ValueError('Invalid barrier type')
+        elif barrier_type.lower().startswith('down'):
+            if barrier_type.lower().endswith(('in', 'out')):
+                # Calculate 'down-and-out' option
+                x_max = S0 * 3
+                x_min = B
+
+                out_option_price = option_price_pde(S0, K, T, r, sigma, option_type, nx, nt, x_min, x_max)
+            else:
+                raise ValueError('Invalid barrier type')
         else:
             raise ValueError('Invalid barrier type')
-    elif barrier_type.lower().startswith('down'):
-        if barrier_type.lower().endswith(('in', 'out')):
-            # Calculate 'down-and-out' option
-            x_max = S0 * 3
-            x_min = B
+
+        if barrier_type.lower().endswith('out'):
+            return out_option_price
+        elif barrier_type.lower().endswith('in'):
+            vanilla_option_price = vanilla_option_price_pde(S0, K, T, r, sigma, option_type, S0 * 3, nx, nt,)
+            return vanilla_option_price - out_option_price
+    elif option_type == 'put':
+        # Discretize asset prices
+        if barrier_type.lower().startswith('up'):
+            if barrier_type.lower().endswith(('in', 'out')):
+                # Calculate 'up-and-out' option
+                x_max = B
+                x_min = 0
+
+                out_option_price = option_price_pde(S0, K, T, r, sigma, option_type, nx, nt, x_min, x_max, )
+            else:
+                raise ValueError('Invalid barrier type')
+        elif barrier_type.lower().startswith('down'):
+            if barrier_type.lower().endswith(('in', 'out')):
+                # Calculate 'down-and-out' option
+                x_max = S0 * 3
+                x_min = 0
+
+                out_option_price = option_price_pde(S0, K, T, r, sigma, option_type, nx, nt, x_min, x_max, B)
+            else:
+                raise ValueError('Invalid barrier type')
         else:
             raise ValueError('Invalid barrier type')
-    else:
-        raise ValueError('Invalid barrier type')
 
-    out_option_price = option_price_pde(S0, K, T, r, sigma, option_type, nx, nt, x_min, x_max)
-
-    if barrier_type.lower().endswith('out'):
-        return out_option_price
-    elif barrier_type.lower().endswith('in'):
-        vanilla_option_price = vanilla_option_price_pde(S0, K, T, r, sigma, option_type, x_max, nx, nt,)
-        return vanilla_option_price - out_option_price
+        if barrier_type.lower().endswith('out'):
+            return out_option_price
+        elif barrier_type.lower().endswith('in'):
+            vanilla_option_price = vanilla_option_price_pde(S0, K, T, r, sigma, option_type, S0 * 3, nx, nt, )
+            return vanilla_option_price - out_option_price
 
 if __name__ == "__main__":
     S0 = 100.
@@ -115,11 +161,19 @@ if __name__ == "__main__":
     T = 1.
     r = 0.02
     sigma = 0.2
-    option_type = 'call'
+    option_type = 'put'
     barrier_type = 'down-and-out'
-    nx = 1000
+    nx = 300
     nt = 252
     B = 80
+    x_min = 0
+    x_max = S0 * 3
 
-    price = barrier_option_price_pde(S0, K, T, r, sigma, B, option_type, barrier_type, nx, nt,)
+    price = option_price_pde(S0, K, T, r, sigma, option_type, nx, nt, x_min, x_max, B)
+
+    print(price)
+
+
+    price = option_price_pde(S0, K, T, r, sigma, option_type, nx, nt, x_min, x_max,)
+
     print(price)
